@@ -59,4 +59,4 @@ jobs:
         with:
           app-name: 'vighneshearthquake'
           slot-name: 'production'
-          publish-profile: ${{ secrets.AzureAppService_PublishProfile_5c2d2273f0ee438ea1bbb0e65ecd1bfc }}
+          publish-profile: ${{ secrets.AzureAppService_PublishProfile_75a7f6bb485b44f4bad22a48e85844bb }}
