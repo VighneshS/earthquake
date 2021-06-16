@@ -59,4 +59,4 @@ jobs:
         with:
           app-name: 'vighnesh-earthquake'
           slot-name: 'production'
-          publish-profile: ${{ secrets.AzureAppService_PublishProfile_51dba8d9e5c94161940c3369f1d0a241 }}
+          publish-profile: ${{ secrets.AzureAppService_PublishProfile_e4bb51bc990e4740877d764b3915b43d }}
