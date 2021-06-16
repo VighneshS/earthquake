@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from flask import Flask, render_template, request
 import os
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import desc
 from datetime import datetime
 from urllib.parse import unquote
 from urllib.parse import urlparse
@@ -25,55 +24,81 @@ db = SQLAlchemy(app)
 
 @dataclass
 class Earthquake(db.Model):
-    __tablename__ = 'earthquakes2'
+    __tablename__ = 'earthquakes'
+    id: str
     time: datetime
-    time2: int
     latitude: float
     longitude: float
     depth: float
     mag: float
     magType: str
+    nst: int
+    gap: float
+    dmin: float
+    rms: float
     net: str
+    updated: datetime
     place: str
+    type: str
+    horizontalError: float
+    depthError: float
+    magError: float
+    magNst: int
+    status: str
+    locationSource: str
+    magSource: str
 
-    time2 = db.Column(db.Integer, primary_key=True, nullable=False)
+    id = db.Column(db.String(200), primary_key=True, nullable=False)
     time = db.Column(db.TIMESTAMP)
     latitude = db.Column(db.Float)
     longitude = db.Column(db.Float)
     depth = db.Column(db.Float)
     mag = db.Column(db.Float)
     magType = db.Column(db.Text)
-    net = db.Column(db.String)
+    nst = db.Column(db.Integer)
+    gap = db.Column(db.Float)
+    dmin = db.Column(db.Float)
+    rms = db.Column(db.Float)
+    net = db.Column(db.Text)
+    updated = db.Column(db.TIMESTAMP)
     place = db.Column(db.Text)
+    type = db.Column(db.Text)
+    horizontalError = db.Column(db.Float)
+    depthError = db.Column(db.Float)
+    magError = db.Column(db.Float)
+    magNst = db.Column(db.Integer)
+    status = db.Column(db.Text)
+    locationSource = db.Column(db.Text)
+    magSource = db.Column(db.Text)
 
 
 @app.route('/', methods=['GET'])
 def home():
     page = getPageParam()
     items = getItemsParam()
-    minTime2 = getMinTime2Param()
-    maxTime2 = getMaxTime2Param()
+    minMag = getMinMagParam()
+    maxMag = getMaxMagParam()
     fromDate = getFromDateParam()
     toDate = getToDateParam()
-    return render_template('index.html', data=fetchAllData(page, items, minTime2, maxTime2, fromDate, toDate))
+    return render_template('index.html', data=fetchAllData(page, items, minMag, maxMag, fromDate, toDate))
 
 
 def getToDateParam():
-    return datetime.strptime("6/16/2021" if not request.args.get('toDate') else unquote(request.args.get('toDate')),
+    return datetime.strptime("6/14/2021" if not request.args.get('toDate') else unquote(request.args.get('toDate')),
                              '%m/%d/%Y')
 
 
 def getFromDateParam():
     return datetime.strptime(
-        "6/9/2021" if not request.args.get('fromDate') else unquote(request.args.get('fromDate')), '%m/%d/%Y')
+        "6/6/2021" if not request.args.get('fromDate') else unquote(request.args.get('fromDate')), '%m/%d/%Y')
 
 
-def getMaxTime2Param():
-    return 8000 if not request.args.get('maxTime2') else int(request.args.get('maxTime2'))
+def getMaxMagParam():
+    return 6 if not request.args.get('maxMag') else float(request.args.get('maxMag'))
 
 
-def getMinTime2Param():
-    return 5000 if not request.args.get('minTime2') else int(request.args.get('minTime2'))
+def getMinMagParam():
+    return -1 if not request.args.get('minMag') else float(request.args.get('minMag'))
 
 
 def getItemsParam():
@@ -89,11 +114,11 @@ def hello_world():
     return "Hello World"
 
 
-def fetchAllData(page: int, items: int, minTime2: float, maxTime2: float, fromDate: datetime, toDate: datetime):
-    return Earthquake.query.filter(Earthquake.time2 >= minTime2).filter(Earthquake.time2 <= maxTime2).filter(
+def fetchAllData(page: int, items: int, minMag: float, maxMag: float, fromDate: datetime, toDate: datetime):
+    return Earthquake.query.filter(Earthquake.mag >= minMag).filter(Earthquake.mag <= maxMag).filter(
         Earthquake.time >= fromDate).filter(
-        Earthquake.time <= toDate).order_by(desc(Earthquake.mag)).paginate(per_page=items, page=page,
-                                                                           error_out=True)
+        Earthquake.time <= toDate).paginate(per_page=items, page=page,
+                                            error_out=True)
 
 
 if __name__ == '__main__':

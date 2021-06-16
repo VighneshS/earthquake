@@ -1,3 +1,2 @@
 Flask==2.0.1
 flask_sqlalchemy
-SQLAlchemy~=1.4.17

@@ -1,9 +1,9 @@
 var urlParams = new URLSearchParams(window.location.search);
 var page = urlParams.has('page') ? urlParams.get('page') : 1
-var minTime2 = urlParams.has('minTime2') ? urlParams.get('minTime2') : 5000
-var maxTime2 = urlParams.has('maxTime2') ? urlParams.get('maxTime2') : 8000
-var fromDate = urlParams.has('fromDate') ? decodeURIComponent(urlParams.get('fromDate')) : '6/9/2021'
-var toDate = urlParams.has('toDate') ? decodeURIComponent(urlParams.get('toDate')) : '6/16/2021'
+var minMag = urlParams.has('minMag') ? urlParams.get('minMag') : -1
+var maxMag = urlParams.has('maxMag') ? urlParams.get('maxMag') : 6
+var fromDate = urlParams.has('fromDate') ? decodeURIComponent(urlParams.get('fromDate')) : '6/6/2021'
+var toDate = urlParams.has('toDate') ? decodeURIComponent(urlParams.get('toDate')) : '6/14/2021'
 
 // don't forget to include leaflet-heatmap.js
 var testData = {
@@ -49,19 +49,19 @@ var map = new L.Map('map-canvas', {
 heatmapLayer.setData(testData);
 
 $(function () {
-    $("#time2-rage").slider({
+    $("#magnitude-rage").slider({
         range: true,
-        min: 5000,
-        max: 8000,
-        values: [minTime2, maxTime2],
-        step: 1,
+        min: -1,
+        max: 6,
+        values: [minMag, maxMag],
+        step: 0.1,
         slide: function (event, ui) {
-            $("#time2").val(ui.values[0] + " - " + ui.values[1]);
+            $("#magnitude").val(ui.values[0] + " - " + ui.values[1]);
         }
     });
 
-    $("#time2").val($("#time2-rage").slider("values", 0) +
-        " to " + $("#time2-rage").slider("values", 1));
+    $("#magnitude").val($("#magnitude-rage").slider("values", 0) +
+        " to " + $("#magnitude-rage").slider("values", 1));
 
     $("#from").val(fromDate)
     $("#to").val(toDate)
@@ -71,8 +71,8 @@ $(function () {
                 defaultDate: fromDate,
                 changeMonth: true,
                 numberOfMonths: 1,
-                minDate: "6/9/2021",
-                maxDate: "6/16/2021"
+                minDate: "6/6/2021",
+                maxDate: "6/14/2021"
             })
             .on("change", function () {
                 to.datepicker("option", "minDate", getDate(this));
@@ -81,8 +81,8 @@ $(function () {
             defaultDate: toDate,
             changeMonth: true,
             numberOfMonths: 1,
-            minDate: "6/9/2021",
-            maxDate: "6/16/2021"
+            minDate: "6/6/2021",
+            maxDate: "6/14/2021"
         })
             .on("change", function () {
                 from.datepicker("option", "maxDate", getDate(this));
@@ -101,10 +101,10 @@ $(function () {
 });
 
 function apply() {
-    minTime2 = $("#time2-rage").slider("values", 0)
-    maxTime2 = $("#time2-rage").slider("values", 1)
+    minMag = $("#magnitude-rage").slider("values", 0)
+    maxMag = $("#magnitude-rage").slider("values", 1)
     fromDate = $('#from').val()
     toDate = $('#to').val()
     fromDate =
-        window.location.replace("/?page=" + page + "&minTime2=" + minTime2 + "&maxTime2=" + maxTime2 + "&fromDate=" + encodeURIComponent(fromDate) + "&toDate=" + encodeURIComponent(toDate));
+        window.location.replace("/?page=" + page + "&minMag=" + minMag + "&maxMag=" + maxMag + "&fromDate=" + encodeURIComponent(fromDate) + "&toDate=" + encodeURIComponent(toDate));
 }
