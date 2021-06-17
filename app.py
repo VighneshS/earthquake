@@ -2,20 +2,26 @@ from dataclasses import dataclass
 from flask import Flask, render_template, request
 import os
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import create_engine
+from sqlalchemy import text
 from datetime import datetime
 from urllib.parse import unquote
-from urllib.parse import urlparse
 
 server = os.environ['UD_HOST_NAME']
 database = os.environ['UD_DB_NAME']
 username = os.environ['UD_DB_USERNAME']
 password = os.environ['UD_DB_PASSWORD']
 
+nightStart = os.environ['NIGHT_START']
+nightEnd = os.environ['NIGHT_END']
+
 app = Flask(__name__)
 
 connection_string = "mysql+mysqlconnector://{0}:{1}@{2}/vxs8596_user_directory".format(username,
                                                                                        password,
                                                                                        server)
+
+engine = create_engine(connection_string)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = connection_string
 
@@ -80,7 +86,12 @@ def home():
     maxMag = getMaxMagParam()
     fromDate = getFromDateParam()
     toDate = getToDateParam()
-    return render_template('index.html', data=fetchAllData(page, items, minMag, maxMag, fromDate, toDate))
+    lat = getLatParam()
+    lon = getLonParam()
+    dist = getDistParam()
+    night = getNightParam()
+    return render_template('index.html',
+                           data=fetchAllData(page, items, minMag, maxMag, fromDate, toDate, lat, lon, dist, night))
 
 
 def getToDateParam():
@@ -109,16 +120,75 @@ def getPageParam():
     return 1 if not request.args.get('page') else int(request.args.get('page'))
 
 
+def getLatParam():
+    return None if not request.args.get('lat') else int(request.args.get('lat'))
+
+
+def getLonParam():
+    return None if not request.args.get('lon') else int(request.args.get('lon'))
+
+
+def getDistParam():
+    return None if not request.args.get('dist') else int(request.args.get('dist'))
+
+
+def getNightParam():
+    return False if not request.args.get('night') else request.args.get('night') == 'true'
+
+
 @app.route('/status')
 def hello_world():
     return "Hello World"
 
 
-def fetchAllData(page: int, items: int, minMag: float, maxMag: float, fromDate: datetime, toDate: datetime):
-    return Earthquake.query.filter(Earthquake.mag >= minMag).filter(Earthquake.mag <= maxMag).filter(
-        Earthquake.time >= fromDate).filter(
-        Earthquake.time <= toDate).paginate(per_page=items, page=page,
-                                            error_out=True)
+def fetchAllData(page: int, items: int, minMag: float, maxMag: float, fromDate: datetime, toDate: datetime, lat: float,
+                 lon: float, dist: float, night: bool):
+    global data
+    distanceFIlterQuery = """
+    6373.0 *
+    (2 * ATAN2(SQRT(((POW(SIN((latitude - :lat) / 2), 2) +
+    (COS(latitude) * COS(:lat) * POW(SIN((longitude - :lon) / 2), 2))))),
+    SQRT(1 - ((POW(SIN((latitude - :lat) / 2), 2)) +
+    (COS(latitude) * COS(:lat) * POW(SIN((longitude - :lon) / 2), 2)))))) <= :dist
+    """
+    nightFilterQuery = """
+    time(time) between ':nightStart' and ':nightEnd'
+    """
+    if lat and lon and dist and night:
+        distanceFilterQueryString = text(
+            distanceFIlterQuery.replace(':lat', str(lat)).replace(':lon', str(lon)).replace(':dist', str(dist)))
+        nightFilterQueryString = text(
+            nightFilterQuery.replace(':nightStart', nightStart).replace(':nightEnd', nightEnd))
+
+        data = Earthquake.query.filter(Earthquake.mag >= minMag).filter(Earthquake.mag <= maxMag).filter(
+            Earthquake.time >= fromDate).filter(Earthquake.time <= toDate).filter(distanceFilterQueryString).filter(
+            nightFilterQueryString).paginate(per_page=items,
+                                             page=page,
+                                             error_out=True)
+    elif lat and lon and dist and not night:
+        distanceFilterQueryString = text(
+            distanceFIlterQuery.replace(':lat', str(lat)).replace(':lon', str(lon)).replace(':dist', str(dist)))
+        data = Earthquake.query.filter(Earthquake.mag >= minMag).filter(Earthquake.mag <= maxMag).filter(
+            Earthquake.time >= fromDate).filter(Earthquake.time <= toDate).filter(distanceFilterQueryString).paginate(
+            per_page=items,
+            page=page,
+            error_out=True)
+    elif (not lat or not lon or not dist) and night:
+        data = Earthquake.query.filter(Earthquake.mag >= minMag).filter(Earthquake.mag <= maxMag).filter(
+            Earthquake.time >= fromDate).filter(Earthquake.time <= toDate).paginate(per_page=items, page=page,
+                                                                                    error_out=True)
+        nightFilterQueryString = text(
+            nightFilterQuery.replace(':nightStart', nightStart).replace(':nightEnd', nightEnd))
+
+        data = Earthquake.query.filter(Earthquake.mag >= minMag).filter(Earthquake.mag <= maxMag).filter(
+            Earthquake.time >= fromDate).filter(Earthquake.time <= toDate).filter(
+            nightFilterQueryString).paginate(per_page=items, page=page,
+                                             error_out=True)
+    else:
+        data = Earthquake.query.filter(Earthquake.mag >= minMag).filter(Earthquake.mag <= maxMag).filter(
+            Earthquake.time >= fromDate).filter(Earthquake.time <= toDate).paginate(per_page=items, page=page,
+                                                                                    error_out=True)
+    return data
 
 
 if __name__ == '__main__':

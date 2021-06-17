@@ -52,7 +52,20 @@
     <input type="text" id="from" name="from">
     <label for="to">to</label>
     <input type="text" id="to" name="to">
-    <br>
+    <br><br>
+    <label>Distance from a location</label><br>
+    <label for="lat">Latitude</label>
+    <input type="number" id="lat" step="0.1" min="-90" max="90" placeholder="Latitude min -90 to max +90"
+           style="width: 17%"/><span> in degrees</span> <br>
+    <label for="lon">Longitude</label>
+    <input type="number" id="lon" step="0.1" min="-180" max="180" placeholder="Longitude min -180 to max +180"
+           style="width: 19%"/><span> in degrees</span><br>
+    <label for="dist">Distance</label>
+    <input type="number" id="dist" step="0.1" min="0" max="10" placeholder="Distance in km" style="width: 10%"/><span> in km</span>
+    <div class="custom-control custom-switch">
+        <input type="checkbox" class="custom-control-input" id="night">
+        <label class="custom-control-label" for="night">Night values between the time {{ nightStart }} to {{ nightEnd }}</label>
+    </div>
 </form>
 <button class="btn" id="apply" onclick="apply()">Apply</button>
 <ul class="pagination">
@@ -146,6 +159,12 @@
     {% if data.has_next %}
         <li class="page-item"><a class="page-link"
                                  href="/?page=
+
+
+
+
+
+
                                          {{ data.next_num }}{#&minMag={{ getMinMagParam() }}&maxMag={{ getMaxMagParam() }}&fromDate={{ urlparse(getFromDateParam()) }}&toDate={{ urlparse(getToDateParam()) }}#}">Next</a>
         </li>
 

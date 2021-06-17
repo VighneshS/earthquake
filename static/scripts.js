@@ -2,8 +2,13 @@ var urlParams = new URLSearchParams(window.location.search);
 var page = urlParams.has('page') ? urlParams.get('page') : 1
 var minMag = urlParams.has('minMag') ? urlParams.get('minMag') : -1
 var maxMag = urlParams.has('maxMag') ? urlParams.get('maxMag') : 6
+var lat = urlParams.has('lat') ? urlParams.get('lat') : null
+var lon = urlParams.has('lon') ? urlParams.get('lon') : null
+var dist = urlParams.has('dist') ? urlParams.get('dist') : null
 var fromDate = urlParams.has('fromDate') ? decodeURIComponent(urlParams.get('fromDate')) : '6/6/2021'
 var toDate = urlParams.has('toDate') ? decodeURIComponent(urlParams.get('toDate')) : '6/14/2021'
+var night = urlParams.has('night') ? urlParams.get('night') : false
+console.log(night);
 
 // don't forget to include leaflet-heatmap.js
 var testData = {
@@ -98,6 +103,11 @@ $(function () {
 
         return date;
     }
+
+    $("#lat").val(lat)
+    $("#lon").val(lon)
+    $("#dist").val(dist)
+    night ? $('#night').prop('checked', true) : $('#night').prop('checked', false)
 });
 
 function apply() {
@@ -105,6 +115,12 @@ function apply() {
     maxMag = $("#magnitude-rage").slider("values", 1)
     fromDate = $('#from').val()
     toDate = $('#to').val()
+    lat = $("#lat").val()
+    lon = $("#lon").val()
+    dist = $("#dist").val()
+    night = $('#night').prop('checked')
     fromDate =
-        window.location.replace("/?page=" + page + "&minMag=" + minMag + "&maxMag=" + maxMag + "&fromDate=" + encodeURIComponent(fromDate) + "&toDate=" + encodeURIComponent(toDate));
+        window.location.replace("/?page=" + page + "&minMag=" + minMag + "&maxMag=" + maxMag
+            + "&fromDate=" + encodeURIComponent(fromDate) + "&toDate=" + encodeURIComponent(toDate)
+            + "&lat=" + lat + "&lon=" + lon + "&dist=" + dist + "&night=" + night);
 }
