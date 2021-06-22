@@ -1,3 +1,6 @@
+var MIN_DATE = '5/1/2021'
+var MAX_DATE = '6/20/2021'
+
 var urlParams = new URLSearchParams(window.location.search);
 var page = urlParams.has('page') ? urlParams.get('page') : 1
 var minMag = urlParams.has('minMag') ? urlParams.get('minMag') : -1
@@ -5,9 +8,10 @@ var maxMag = urlParams.has('maxMag') ? urlParams.get('maxMag') : 6
 var lat = urlParams.has('lat') ? urlParams.get('lat') : null
 var lon = urlParams.has('lon') ? urlParams.get('lon') : null
 var dist = urlParams.has('dist') ? urlParams.get('dist') : null
-var fromDate = urlParams.has('fromDate') ? decodeURIComponent(urlParams.get('fromDate')) : '6/6/2021'
-var toDate = urlParams.has('toDate') ? decodeURIComponent(urlParams.get('toDate')) : '6/14/2021'
+var fromDate = urlParams.has('fromDate') ? decodeURIComponent(urlParams.get('fromDate')) : MIN_DATE
+var toDate = urlParams.has('toDate') ? decodeURIComponent(urlParams.get('toDate')) : MAX_DATE
 var night = urlParams.has('night') ? urlParams.get('night') : false
+var net = urlParams.has('net') ? urlParams.get('net') : null
 
 $(function () {
     $("#magnitude-rage").slider({
@@ -32,8 +36,8 @@ $(function () {
                 defaultDate: fromDate,
                 changeMonth: true,
                 numberOfMonths: 1,
-                minDate: "6/6/2021",
-                maxDate: "6/14/2021"
+                minDate: MIN_DATE,
+                maxDate: MAX_DATE
             })
             .on("change", function () {
                 to.datepicker("option", "minDate", getDate(this));
@@ -42,8 +46,8 @@ $(function () {
             defaultDate: toDate,
             changeMonth: true,
             numberOfMonths: 1,
-            minDate: "6/6/2021",
-            maxDate: "6/14/2021"
+            minDate: MIN_DATE,
+            maxDate: MAX_DATE
         })
             .on("change", function () {
                 from.datepicker("option", "maxDate", getDate(this));
@@ -63,7 +67,8 @@ $(function () {
     $("#lat").val(lat)
     $("#lon").val(lon)
     $("#dist").val(dist)
-    night ? $('#night').prop('checked', true) : $('#night').prop('checked', false)
+    $("#net").val(net)
+    $('#night').prop('checked', night === 'true')
 });
 
 function apply() {
@@ -75,8 +80,9 @@ function apply() {
     lon = $("#lon").val()
     dist = $("#dist").val()
     night = $('#night').prop('checked')
-    fromDate =
-        window.location.replace("/analyse?page=" + page + "&minMag=" + minMag + "&maxMag=" + maxMag
-            + "&fromDate=" + encodeURIComponent(fromDate) + "&toDate=" + encodeURIComponent(toDate)
-            + "&lat=" + lat + "&lon=" + lon + "&dist=" + dist + "&night=" + night);
+    net = $('#net').val()
+    window.location.replace(window.location.pathname + "?page=" + page + "&minMag=" + minMag
+        + "&maxMag=" + maxMag + "&fromDate=" + encodeURIComponent(fromDate)
+        + "&toDate=" + encodeURIComponent(toDate) + "&lat=" + lat + "&lon=" + lon + "&dist="
+        + dist + "&night=" + night + "&net=" + net);
 }

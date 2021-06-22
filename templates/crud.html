@@ -40,71 +40,76 @@
 
     {% endif %}
 {% endwith %}
-<ul class="nav nav-tabs" id="crudTab" role="tablist">
-    <li class="nav-item">
-        <a class="nav-link active" id="home-tab" data-toggle="tab" href="#crud-csv" role="tab" aria-controls="crud-csv"
-           aria-selected="true">Create DB from CSV</a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link" id="create-tab" data-toggle="tab" href="#create" role="tab" aria-controls="create"
-           aria-selected="false">Create</a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link" id="delete-tab" data-toggle="tab" href="#delete" role="tab" aria-controls="delete"
-           aria-selected="false">Delete</a>
-    </li>
-</ul>
-<div class="tab-content" id="crudTabContent">
-    <div class="tab-pane fade show active" id="crud-csv" role="tabpanel" aria-labelledby="crud-csv-tab"
-         style="margin: 50px">
-        <div class="row col-md-6">
-            <h1>Initialize Database</h1>
-        </div>
-        <div class="row col-md-6">
-            <form method="POST" action="/init">
-                <p><input type="submit" class="btn btn-primary" value="Initialize Database"></p>
-            </form>
-        </div>
-    </div>
-    <div class="tab-pane fade" id="create" role="tabpanel" aria-labelledby="create-tab" style="margin: 50px">
-        <div class="row col-md-6">
-            <h1>Upload your CSV file to insert records</h1>
-        </div>
-        <div class="row col-md-6">
-            <form method="POST" action="/upload" enctype="multipart/form-data">
-                <p><input type="file" name="file"></p>
-                <p><input type="submit" class="btn btn-primary" value="Create"></p>
-            </form>
-        </div>
-    </div>
-    <div class="tab-pane fade" id="delete" role="tabpanel" aria-labelledby="delete-tab" style="margin: 50px">
-        <div class="row col-md-6">
-            <h1>Upload your CSV file to delete records</h1>
-        </div>
-        <div class="row col-md-6">
-            <form method="POST" action="/delete" enctype="multipart/form-data">
-                <p><input type="file" name="file"></p>
-                <p><input type="submit" class="btn btn-danger" value="Delete"></p>
-            </form>
-        </div>
-    </div>
+<div class="row col-md-12">
+    <form method="POST" action="/init?server=sql" style="margin: 5px">
+        <p><input type="submit" class="btn btn-primary" value="Initialize Database"></p>
+    </form>
+    <form method="POST" action="/create?server=sql" style="margin: 5px">
+        <p><input type="submit" class="btn btn-primary" value="Create random data"></p>
+    </form>
+    <form method="POST" action="/delete?type=random&server=sql" style="margin: 5px">
+        <p><input type="submit" class="btn btn-danger" value="Delete random data"></p>
+    </form>
 </div>
 {% if data != [] %}
+    <form class="multi-range-field my-5 pb-5">
+        <label for="magnitude">Magnitude</label>
+        <br><input id="magnitude" type="text" readonly
+                   style="border:0; color:#f6931f; font-weight:bold;"/>
+        <div id="magnitude-rage"></div>
+        <br>
+        <label>Date</label>
+        <br>
+        <label for="from">From</label>
+        <input type="text" id="from" name="from">
+        <label for="to">to</label>
+        <input type="text" id="to" name="to">
+        <br>
+        <label for="net">Net</label>
+        <input type="text" id="net" placeholder="net"
+               style="width: 10%"/>
+        <br>
+        <label>Distance from a location</label><br>
+        <label for="lat">Latitude</label>
+        <input type="number" id="lat" step="0.1" min="-90" max="90" placeholder="Latitude min -90 to max +90"
+               style="width: 17%"/><span> in degrees</span> <br>
+        <label for="lon">Longitude</label>
+        <input type="number" id="lon" step="0.1" min="-180" max="180" placeholder="Longitude min -180 to max +180"
+               style="width: 19%"/><span> in degrees</span><br>
+        <label for="dist">Distance</label>
+        <input type="number" id="dist" step="0.1" min="0" max="10" placeholder="Distance in km"
+               style="width: 10%"/><span> in km</span>
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" value="" id="night">
+            <label class="form-check-label" for="night">
+                Night values between the time {{ nightStart }}
+                to {{ nightEnd }}
+            </label>
+        </div>
+    </form>
+    <button class="btn" id="apply" onclick="apply()">Apply</button>
+    <br>
     <ul class="pagination">
         {% if data.has_prev %}
-            <li class="page-item"><a class="page-link" href="/?page={{ data.prev_num }}">Previous</a></li>
+            <li class="page-item"><a class="page-link"
+                                     href="{{ request.path }}?page={{ data.prev_num }}&minMag={{ request.args.get('minMag') }}&maxMag={{ request.args.get('maxMag') }}&fromDate={{ request.args.get('fromDate') }}&toDate={{ request.args.get('toDate') }}&night={{ request.args.get('night') }}&net={{ request.args.get('net') }}">Previous</a>
+            </li>
         {% else %}
             <li class="page-item disabled"><span class="page-link">Previous</span></li>
         {% endif %}
         {% for page in data.iter_pages(left_edge=3, right_edge=3) %}
             {% if page %}
-                <li class="page-item"><a class="page-link" href="/?page={{ page }}">{{ page }}</a></li>
+                <li class="page-item {{ 'active' if data.page == page else '' }}"><a class="page-link"
+                                                                                     href="{{ request.path }}?page={{ page }}&minMag={{ request.args.get('minMag') }}&maxMag={{ request.args.get('maxMag') }}&fromDate={{ request.args.get('fromDate') }}&toDate={{ request.args.get('toDate') }}&night={{ request.args.get('night') }}&net={{ request.args.get('net') }}">{{ page }}</a>
+                </li>
             {% else %}
                 <li class="page-item disabled" id="table_ellipsis_head"><a href="#" class="page-link">...</a></li>
             {% endif %}
         {% endfor %}
         {% if data.has_next %}
-            <li class="page-item"><a class="page-link" href="/?page={{ data.next_num }}">Next</a></li>
+            <li class="page-item"><a class="page-link"
+                                     href="{{ request.path }}?page={{ data.next_num }}&minMag={{ request.args.get('minMag') }}&maxMag={{ request.args.get('maxMag') }}&fromDate={{ request.args.get('fromDate') }}&toDate={{ request.args.get('toDate') }}&night={{ request.args.get('night') }}&net={{ request.args.get('net') }}">Next</a>
+            </li>
         {% else %}
             <li class="page-item disabled"><span class="page-link">Next</span></li>
         {% endif %}
@@ -167,23 +172,24 @@
     </table>
     <ul class="pagination">
         {% if data.has_prev %}
-            <li class="page-item"><a class="page-link" href="/?page={{ data.prev_num }}">Previous</a></li>
+            <li class="page-item"><a class="page-link"
+                                     href="{{ request.path }}?page={{ data.prev_num }}&minMag={{ request.args.get('minMag') }}&maxMag={{ request.args.get('maxMag') }}&fromDate={{ request.args.get('fromDate') }}&toDate={{ request.args.get('toDate') }}&night={{ request.args.get('night') }}&net={{ request.args.get('net') }}">Previous</a>
+            </li>
         {% else %}
             <li class="page-item disabled"><span class="page-link">Previous</span></li>
         {% endif %}
         {% for page in data.iter_pages(left_edge=3, right_edge=3) %}
             {% if page %}
-                <li class="page-item"><a class="page-link" href="/?page={{ page }}">{{ page }}</a></li>
+                <li class="page-item {{ 'active' if data.page == page else '' }}"><a class="page-link"
+                                                                                     href="{{ request.path }}?page={{ page }}&minMag={{ request.args.get('minMag') }}&maxMag={{ request.args.get('maxMag') }}&fromDate={{ request.args.get('fromDate') }}&toDate={{ request.args.get('toDate') }}&night={{ request.args.get('night') }}&net={{ request.args.get('net') }}">{{ page }}</a>
+                </li>
             {% else %}
                 <li class="page-item disabled" id="table_ellipsis_foot"><a href="#" class="page-link">...</a></li>
             {% endif %}
         {% endfor %}
         {% if data.has_next %}
             <li class="page-item"><a class="page-link"
-                                     href="/?page=
-                                             {{ data.next_num }}
-{#&minMag={{ getMinMagParam() }}&maxMag={{ getMaxMagParam() }}&fromDate={{ urlparse(getFromDateParam()) }}
-&toDate={{ urlparse(getToDateParam()) }}#}">Next</a>
+                                     href="{{ request.path }}?page={{ data.next_num }}&minMag={{ request.args.get('minMag') }}&maxMag={{ request.args.get('maxMag') }}&fromDate={{ request.args.get('fromDate') }}&toDate={{ request.args.get('toDate') }}&night={{ request.args.get('night') }}&net={{ request.args.get('net') }}">Next</a>
             </li>
 
         {% else %}
@@ -192,6 +198,11 @@
 
     </ul>
     <strong>Number of Incidents Retrived: {{ data.total }}</strong>
+    <br>
+    <form method="POST" style="margin: 5px"
+          action="/delete?type=filter&server=sql&minMag={{ request.args.get('minMag') }}&maxMag={{ request.args.get('maxMag') }}&fromDate={{ request.args.get('fromDate')|urlencode }}&toDate={{ request.args.get('toDate') }}&night={{ request.args.get('night') }}&net={{ request.args.get('net') }}">
+        <p><input type="submit" class="btn btn-danger" value="Delete filtered Data"></p>
+    </form>
 {% endif %}
 <script src="{{ url_for('static', filename='scripts.js') }}"></script>
 </body>
