@@ -1,4 +1,7 @@
 Flask==2.0.1
-mysql-connector
+pymysql
 flask_sqlalchemy
 SQLAlchemy~=1.4.17
+numpy~=1.20.1
+pandas~=1.2.2
+python-dateutil~=2.8.1

@@ -8,50 +8,6 @@ var dist = urlParams.has('dist') ? urlParams.get('dist') : null
 var fromDate = urlParams.has('fromDate') ? decodeURIComponent(urlParams.get('fromDate')) : '6/6/2021'
 var toDate = urlParams.has('toDate') ? decodeURIComponent(urlParams.get('toDate')) : '6/14/2021'
 var night = urlParams.has('night') ? urlParams.get('night') : false
-console.log(night);
-
-// don't forget to include leaflet-heatmap.js
-var testData = {
-    max: 8,
-    data: [{lat: 24.6408, lng: 46.7728, count: 3}, {lat: 50.75, lng: -1.55, count: 1}]
-};
-
-var baseLayer = L.tileLayer(
-    'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '...',
-        maxZoom: 18
-    }
-);
-
-var cfg = {
-    // radius should be small ONLY if scaleRadius is true (or small radius is intended)
-    // if scaleRadius is false it will be the constant radius used in pixels
-    "radius": 2,
-    "maxOpacity": .8,
-    // scales the radius based on map zoom
-    "scaleRadius": true,
-    // if set to false the heatmap uses the global maximum for colorization
-    // if activated: uses the data maximum within the current map boundaries
-    //   (there will always be a red spot with useLocalExtremas true)
-    "useLocalExtrema": true,
-    // which field name in your data represents the latitude - default "lat"
-    latField: 'lat',
-    // which field name in your data represents the longitude - default "lng"
-    lngField: 'lng',
-    // which field name in your data represents the data value - default "value"
-    valueField: 'count'
-};
-
-
-var heatmapLayer = new HeatmapOverlay(cfg);
-
-var map = new L.Map('map-canvas', {
-    center: new L.LatLng(25.6586, -80.3568),
-    zoom: 4,
-    layers: [baseLayer, heatmapLayer]
-});
-
-heatmapLayer.setData(testData);
 
 $(function () {
     $("#magnitude-rage").slider({
@@ -120,7 +76,7 @@ function apply() {
     dist = $("#dist").val()
     night = $('#night').prop('checked')
     fromDate =
-        window.location.replace("/?page=" + page + "&minMag=" + minMag + "&maxMag=" + maxMag
+        window.location.replace("/analyse?page=" + page + "&minMag=" + minMag + "&maxMag=" + maxMag
             + "&fromDate=" + encodeURIComponent(fromDate) + "&toDate=" + encodeURIComponent(toDate)
             + "&lat=" + lat + "&lon=" + lon + "&dist=" + dist + "&night=" + night);
 }
