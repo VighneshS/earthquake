@@ -1,16 +1,20 @@
 import datetime
+import json
 import os
 from dataclasses import dataclass
 from time import process_time
 from urllib.parse import quote_plus
 from urllib.parse import unquote
+import random
 
 import dateutil.parser
 import pandas as pd
 import sqlalchemy
 from flask import Flask, render_template, request, url_for, send_from_directory, redirect, flash
+from flask_pymongo import PyMongo
 from flask_sqlalchemy import SQLAlchemy
 from markupsafe import Markup
+from pymongo import MongoClient
 from sqlalchemy import create_engine
 from sqlalchemy import text
 
@@ -24,6 +28,9 @@ nightStart = os.environ['NIGHT_START']
 nightEnd = os.environ['NIGHT_END']
 
 secretKey = os.environ['SECRET_KEY']
+redisHost = os.environ['REDIS_HOST']
+redisPassword = os.environ['REDIS_PASSWORD']
+mongoHost = os.environ['MONGO_HOST']
 
 # Upload folder
 UPLOAD_FOLDER = 'static'
@@ -39,7 +46,14 @@ app.config["DEBUG"] = True
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 connection_string = "mysql+pymysql://{0}:{1}@{2}/{3}?charset=utf8mb4".format(username, password, server, database)
+connection_string_mongo = "mongodb+srv://{0}:{1}@{2}/{3}?retryWrites=true&w=majority&ssl=true&ssl_cert_reqs=CERT_NONE".format(
+    username, password, mongoHost, database)
 
+app.config["MONGO_URI"] = connection_string_mongo
+mongo = PyMongo(app)
+client = MongoClient(connection_string_mongo)
+mongoDb = client[database]
+coll = mongoDb[tableName]
 engine = create_engine(connection_string)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = connection_string
@@ -231,6 +245,24 @@ def crud():
                            data=fetchAllData(page, items, minMag, maxMag, fromDate, toDate, lat, lon, dist, night, net))
 
 
+@app.route('/crudMongo', methods=['GET'])
+def crudMongo():
+    page = getPageParam()
+    items = getItemsParam()
+    minMag = getMinMagParam()
+    maxMag = getMaxMagParam()
+    fromDate = getFromDateParam()
+    toDate = getToDateParam()
+    lat = getLatParam()
+    lon = getLonParam()
+    dist = getDistParam()
+    night = getNightParam()
+    net = getNetParam()
+    return render_template('crudMongo.html',
+                           data=fetchAllDataMongo(page, items, minMag, maxMag, fromDate, toDate, lat, lon, dist, night,
+                                                  net))
+
+
 @app.route('/status')
 def hello_world():
     return "Hello World"
@@ -270,6 +302,15 @@ def fetchAllData(page: int, items: int, minMag: float, maxMag: float, fromDate: 
     return data
 
 
+def fetchAllDataMongo(page: int, items: int, minMag: float, maxMag: float, fromDate: datetime, toDate: datetime,
+                      lat: float,
+                      lon: float, dist: float, night: bool, net: str):
+    global data
+    data = []
+    data = mongo.db.earthquakes.find()
+    return data
+
+
 def deleteAllData(minMag: float, maxMag: float, fromDate: datetime, toDate: datetime, lat: float,
                   lon: float, dist: float, night: bool, net: str):
     distanceFIlterQuery = """
@@ -305,11 +346,23 @@ def deleteAllData(minMag: float, maxMag: float, fromDate: datetime, toDate: date
         flash('Table not found', 'danger')
 
 
+def deleteAllDataMongo(minMag: float, maxMag: float, fromDate: datetime, toDate: datetime, lat: float,
+                       lon: float, dist: float, night: bool, net: str):
+    pass
+
+
 def getAllIdsFromDB():
     global inserted_ids
     inserted_ids = []
     for value in Earthquake.query.all():
         inserted_ids.append(value.id)
+
+
+def getAllIdsFromMongoDB():
+    global inserted_ids
+    inserted_ids = []
+    for value in mongo.db.earthquakes.find():
+        inserted_ids.append(value['id'])
 
 
 # Get the uploaded files
@@ -325,6 +378,21 @@ def createRecords():
     flash("Data inserted successfully in {0} (HH:MM:SS)".format(str(datetime.timedelta(seconds=end - start))),
           'success')
     return redirect(url_for('crud'))
+
+
+# Get the uploaded files
+@app.route("/createMongo", methods=['POST'])
+def createMongoRecords():
+    start = end = 0
+    # get the uploaded file
+    getAllIdsFromDB()
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], FILE_NAME)
+    start = process_time()
+    parseCSVToInsertMongo(file_path)
+    end = process_time()
+    flash("Data inserted successfully in {0} (HH:MM:SS)".format(str(datetime.timedelta(seconds=end - start))),
+          'success')
+    return redirect(url_for('crudMongo'))
 
 
 # Get the uploaded files
@@ -359,6 +427,37 @@ def deleteFiles():
 
 
 # Get the uploaded files
+@app.route("/deleteMongo", methods=['POST'])
+def deleteMongoFiles():
+    start = end = 0
+    if request.args.get('type') == 'random' and request.args.get('server') == 'sql':
+        getAllIdsFromMongoDB()
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], FILE_NAME)
+        start = process_time()
+        parseCSVToDeleteMongo(file_path)
+        end = process_time()
+        flash("Data deleted successfully in {0} (HH:MM:SS)".format(str(datetime.timedelta(seconds=end - start))),
+              'success')
+    elif request.args.get('type') == 'filter' and request.args.get('server') == 'sql':
+        minMag = getMinMagParam()
+        maxMag = getMaxMagParam()
+        fromDate = getFromDateParam()
+        toDate = getToDateParam()
+        lat = getLatParam()
+        lon = getLonParam()
+        dist = getDistParam()
+        night = getNightParam()
+        net = getNetParam()
+        start = process_time()
+        deleteAllDataMongo(minMag, maxMag, fromDate, toDate, lat, lon, dist, night, net)
+        end = process_time()
+        flash("Data deleted based on filter successfully in {0} (HH:MM:SS)".format(
+            str(datetime.timedelta(seconds=end - start))),
+            'success')
+    return redirect(url_for('crudMongo'))
+
+
+# Get the uploaded files
 @app.route("/init", methods=['POST'])
 def initializeDatabase():
     start = end = 0
@@ -374,6 +473,23 @@ def initializeDatabase():
     return redirect(url_for('crud'))
 
 
+# Get the uploaded files
+@app.route("/initMongo", methods=['POST'])
+def initializeMongoDatabase():
+    global coll
+    start = end = 0
+    if request.args.get('type') == 'random' and request.args.get('server') == 'sql':
+        start = process_time()
+        mongoDb.drop_collection(coll)
+        mongoDb.create_collection(tableName)
+        coll = mongoDb[tableName]
+        end = process_time()
+        flash(
+            "Database initialized successfully in {0} (HH:MM:SS)".format(str(datetime.timedelta(seconds=end - start))),
+            'success')
+    return redirect(url_for('crudMongo'))
+
+
 def parseCSVToInsert(filePath):
     # Use Pandas to parse the CSV file
     allData = pd.read_csv(filePath)
@@ -387,17 +503,36 @@ def parseCSVToInsert(filePath):
     csvData.to_sql(con=engine, index=False, name=Earthquake.__tablename__, if_exists='append', dtype=dataType)
 
 
+def parseCSVToInsertMongo(filePath):
+    # Use Pandas to parse the CSV file
+    allData = pd.read_csv(filePath)
+    csvData = allData[~allData['id'].isin(inserted_ids)].sample(
+        n=RECORDS_TO_INSERT_OR_DELETE) if inserted_ids else allData.sample(n=RECORDS_TO_INSERT_OR_DELETE)
+
+    payload = json.loads(csvData.to_json(orient='records'))
+    coll.insert(payload)
+
+
 def parseCSVToDelete(filePath):
     # Use Pandas to parse the CSV file
     allData = pd.read_csv(filePath)
+    numberOfItems = RECORDS_TO_INSERT_OR_DELETE if len(inserted_ids) >= RECORDS_TO_INSERT_OR_DELETE else len(
+        inserted_ids)
     csvData = allData[allData['id'].isin(inserted_ids)].sample(
-        n=RECORDS_TO_INSERT_OR_DELETE) if inserted_ids else allData.sample(n=RECORDS_TO_INSERT_OR_DELETE)
+        n=numberOfItems) if inserted_ids else allData.sample(n=numberOfItems)
     try:
         delete_q = Earthquake.__table__.delete().where(Earthquake.id.in_(csvData['id'].values))
         db.session.execute(delete_q)
         db.session.commit()
     except sqlalchemy.exc.ProgrammingError:
         flash('Table not found', 'danger')
+
+
+def parseCSVToDeleteMongo(filePath):
+    numberOfItems = RECORDS_TO_INSERT_OR_DELETE if len(inserted_ids) >= RECORDS_TO_INSERT_OR_DELETE else len(
+        inserted_ids)
+    idsToDelete = random.sample(inserted_ids, numberOfItems)
+    mongo.db.earthquakes.remove({'id': {'$in': idsToDelete}})
 
 
 if __name__ == '__main__':
