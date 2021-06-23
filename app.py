@@ -149,18 +149,18 @@ def urlencode_filter(s):
 
 def getToDateParam():
     return datetime.datetime.strptime(
-        "6/20/2021" if not request.args.get('toDate') or request.args.get('minMag') == 'None' else unquote(
+        "6/20/2021" if not request.args.get('toDate') or request.args.get('toDate') == 'None' else unquote(
             request.args.get('toDate')), '%m/%d/%Y')
 
 
 def getFromDateParam():
     return datetime.datetime.strptime(
-        "5/1/2021" if not request.args.get('fromDate') or request.args.get('minMag') != 'None' else unquote(
-            request.args).get('fromDate'), '%m/%d/%Y')
+        "5/1/2021" if not request.args.get('fromDate') or request.args.get('fromDate') == 'None' else unquote(
+            request.args.get('fromDate')), '%m/%d/%Y')
 
 
 def getMaxMagParam():
-    return 6 if not request.args.get('maxMag') or request.args.get('minMag') == 'None' else float(
+    return 6 if not request.args.get('maxMag') or request.args.get('maxMag') == 'None' else float(
         request.args.get('maxMag'))
 
 
@@ -170,34 +170,34 @@ def getMinMagParam():
 
 
 def getItemsParam():
-    return 5 if not request.args.get('items') or request.args.get('minMag') == 'None' else int(
+    return 5 if not request.args.get('items') or request.args.get('items') == 'None' else int(
         request.args.get('items'))
 
 
 def getPageParam():
-    return 1 if not request.args.get('page') or request.args.get('minMag') == 'None' else int(request.args.get('page'))
+    return 1 if not request.args.get('page') or request.args.get('page') == 'None' else int(request.args.get('page'))
 
 
 def getLatParam():
-    return None if not request.args.get('lat') or request.args.get('minMag') == 'None' else int(request.args.get('lat'))
+    return None if not request.args.get('lat') or request.args.get('lat') == 'None' else int(request.args.get('lat'))
 
 
 def getLonParam():
-    return None if not request.args.get('lon') or request.args.get('minMag') == 'None' else int(request.args.get('lon'))
+    return None if not request.args.get('lon') or request.args.get('lon') == 'None' else int(request.args.get('lon'))
 
 
 def getDistParam():
-    return None if not request.args.get('dist') or request.args.get('minMag') == 'None' else int(
+    return None if not request.args.get('dist') or request.args.get('dist') == 'None' else int(
         request.args.get('dist'))
 
 
 def getNightParam():
-    return False if not request.args.get('night') or request.args.get('minMag') == 'None' else request.args.get(
+    return False if not request.args.get('night') or request.args.get('night') == 'None' else request.args.get(
         'night') == 'true'
 
 
 def getNetParam():
-    return None if not request.args.get('net') or request.args.get('minMag') == 'None' else request.args.get('net')
+    return None if not request.args.get('net') or request.args.get('net') == 'None' else request.args.get('net')
 
 
 @app.route('/favicon.ico')
@@ -253,14 +253,9 @@ def crudMongo():
     maxMag = getMaxMagParam()
     fromDate = getFromDateParam()
     toDate = getToDateParam()
-    lat = getLatParam()
-    lon = getLonParam()
-    dist = getDistParam()
-    night = getNightParam()
     net = getNetParam()
     return render_template('crudMongo.html',
-                           data=fetchAllDataMongo(page, items, minMag, maxMag, fromDate, toDate, lat, lon, dist, night,
-                                                  net))
+                           data=fetchAllDataMongo(minMag, maxMag, fromDate, toDate, net))
 
 
 @app.route('/status')
@@ -302,12 +297,21 @@ def fetchAllData(page: int, items: int, minMag: float, maxMag: float, fromDate: 
     return data
 
 
-def fetchAllDataMongo(page: int, items: int, minMag: float, maxMag: float, fromDate: datetime, toDate: datetime,
-                      lat: float,
-                      lon: float, dist: float, night: bool, net: str):
+def fetchAllDataMongo(minMag: float, maxMag: float, fromDate: datetime, toDate: datetime, net: str):
     global data
+    print(fromDate.strftime("%Y-%m-%d %H:%M:%S"), toDate.strftime("%Y-%m-%d %H:%M:%S"), minMag, maxMag, net)
     data = []
-    data = mongo.db.earthquakes.find()
+    query = [{"mag": {
+        "$gte": minMag,
+        "$lte": maxMag
+    }}, {
+        "time": {
+            "$gte": str(fromDate.strftime("%Y-%m-%d %H:%M:%S")),
+            "$lte": str(toDate.strftime("%Y-%m-%d %H:%M:%S"))
+        }}]
+    if net:
+        query.append({"net": net})
+    data = mongo.db[tableName].find({'$and': query})
     return data
 
 
@@ -346,9 +350,19 @@ def deleteAllData(minMag: float, maxMag: float, fromDate: datetime, toDate: date
         flash('Table not found', 'danger')
 
 
-def deleteAllDataMongo(minMag: float, maxMag: float, fromDate: datetime, toDate: datetime, lat: float,
-                       lon: float, dist: float, night: bool, net: str):
-    pass
+def deleteAllDataMongo(minMag: float, maxMag: float, fromDate: datetime, toDate: datetime, net: str):
+    print(fromDate.strftime("%Y-%m-%d %H:%M:%S"), toDate.strftime("%Y-%m-%d %H:%M:%S"), minMag, maxMag, net)
+    query = [{"mag": {
+        "$gte": minMag,
+        "$lte": maxMag
+    }}, {
+        "time": {
+            "$gte": str(fromDate.strftime("%Y-%m-%d %H:%M:%S")),
+            "$lte": str(toDate.strftime("%Y-%m-%d %H:%M:%S"))
+        }}]
+    if net:
+        query.append({"net": net})
+    coll.remove({'$and': query})
 
 
 def getAllIdsFromDB():
@@ -443,13 +457,9 @@ def deleteMongoFiles():
         maxMag = getMaxMagParam()
         fromDate = getFromDateParam()
         toDate = getToDateParam()
-        lat = getLatParam()
-        lon = getLonParam()
-        dist = getDistParam()
-        night = getNightParam()
         net = getNetParam()
         start = process_time()
-        deleteAllDataMongo(minMag, maxMag, fromDate, toDate, lat, lon, dist, night, net)
+        deleteAllDataMongo(minMag, maxMag, fromDate, toDate, net)
         end = process_time()
         flash("Data deleted based on filter successfully in {0} (HH:MM:SS)".format(
             str(datetime.timedelta(seconds=end - start))),
