@@ -71,52 +71,59 @@ function loadChart() {
 }
 
 function createChart(data) {
-    d3.selectAll("svg > *").remove();
-    var svg = d3.select("svg"),
-        margin = 200,
-        width = svg.attr("width") - margin,
-        height = svg.attr("height") - margin;
+    var categories = _.map(data, 'magRange');
+    var values = _.map(data, 'value');
+    Highcharts.chart('container', {
+        chart: {
+            height: "50%",
+            type: 'column'
+        },
+        title: {
+            text: 'Number of earthquakes based on magnitude range'
+        },
+        subtitle: {
+            text: 'Bar Graph'
+        },
+        xAxis: {
+            categories: categories,
+            crosshair: true,
+            title: {
+                text: 'Earthquake Magnitude Range'
+            }
+        },
+        yAxis: {
+            min: 0,
+            title: {
+                text: 'Number of Earthquakes'
+            }
+        },
+        tooltip: {
+            headerFormat: '<span style="font-size:10px">{point.key}</span><table>',
+            pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
+                '<td style="padding:0"><b>{point.y:.1f}</b></td></tr>',
+            footerFormat: '</table>',
+            shared: true,
+            useHTML: true
+        },
+        plotOptions: {
+            series: {
+                color: '#EE6363'
+            },
+            column: {
+                zones: [{
+                	value: _.max(_.map(data, 'value')), // Values up to max value (not including) ...
+                    color: '#79973F' // ... have the color pea.
+                },{
+                	color: '#EE6363' // Values from max value (including) and up have the color fire brick red
+                }],
+                pointPadding: 0.2,
+                borderWidth: 0
+            }
+        },
+        series: [{
+            name: 'Number of Earthquakes',
+            data: values
 
-
-    var xScale = d3.scaleBand().range([0, width]).padding(0.4),
-        yScale = d3.scaleLinear().range([height, 0]);
-
-    var g = svg.append("g")
-        .attr("transform", "translate(" + 100 + "," + 100 + ")");
-
-    xScale.domain(data.map(function (d) {
-        return d.magRange;
-    }));
-    yScale.domain([0, d3.max(data, function (d) {
-        return d.value;
-    })]);
-
-    g.append("g")
-        .attr("transform", "translate(0," + height + ")")
-        .call(d3.axisBottom(xScale));
-
-    g.append("g")
-        .call(d3.axisLeft(yScale).tickFormat(function (d) {
-            return d;
-        }).ticks(10))
-        .append("text")
-        .attr("y", 6)
-        .attr("dy", "0.71em")
-        .attr("text-anchor", "end")
-        .text("value");
-
-    g.selectAll(".bar")
-        .data(data)
-        .enter().append("rect")
-        .attr("class", "bar")
-        .attr("x", function (d) {
-            return xScale(d.magRange);
-        })
-        .attr("y", function (d) {
-            return yScale(d.value);
-        })
-        .attr("width", xScale.bandwidth())
-        .attr("height", function (d) {
-            return height - yScale(d.value);
-        });
+        }]
+    });
 }
