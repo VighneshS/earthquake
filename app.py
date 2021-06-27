@@ -17,6 +17,7 @@ from markupsafe import Markup
 from pymongo import MongoClient
 from sqlalchemy import create_engine
 from sqlalchemy import text
+from flask import jsonify
 
 server = os.environ['UD_HOST_NAME']
 database = os.environ['UD_DB_NAME']
@@ -179,15 +180,15 @@ def getPageParam():
 
 
 def getLatParam():
-    return None if not request.args.get('lat') or request.args.get('lat') == 'None' else int(request.args.get('lat'))
+    return None if not request.args.get('lat') or request.args.get('lat') == 'None' else float(request.args.get('lat'))
 
 
 def getLonParam():
-    return None if not request.args.get('lon') or request.args.get('lon') == 'None' else int(request.args.get('lon'))
+    return None if not request.args.get('lon') or request.args.get('lon') == 'None' else float(request.args.get('lon'))
 
 
 def getDistParam():
-    return None if not request.args.get('dist') or request.args.get('dist') == 'None' else int(
+    return None if not request.args.get('dist') or request.args.get('dist') == 'None' else float(
         request.args.get('dist'))
 
 
@@ -245,10 +246,16 @@ def crud():
                            data=fetchAllData(page, items, minMag, maxMag, fromDate, toDate, lat, lon, dist, night, net))
 
 
+@app.route('/graphs', methods=['GET', 'POST'])
+def graphs():
+    if request.method == 'POST':
+        return fetchAllDataForGraph(request.get_json())
+    else:
+        return render_template('graphs.html')
+
+
 @app.route('/crudMongo', methods=['GET'])
 def crudMongo():
-    page = getPageParam()
-    items = getItemsParam()
     minMag = getMinMagParam()
     maxMag = getMaxMagParam()
     fromDate = getFromDateParam()
@@ -297,9 +304,32 @@ def fetchAllData(page: int, items: int, minMag: float, maxMag: float, fromDate: 
     return data
 
 
+def fetchAllDataForGraph(range: list):
+    try:
+        global data
+        data = []
+        q = '''select case '''
+        qTail = ''' else 'OTHERS'
+            end  as `magRange`,
+            count(1) as `Count`
+            from earthquakes
+            group by magRange'''
+        for r in range:
+            q += " when mag between {f} and {t} then '{f}-{t}' ".replace('{f}', str(r['from'])).replace('{t}',
+                                                                                                        str(r['to']))
+        q += qTail
+        with engine.connect() as con:
+            rs = con.execute(q)
+            for row in rs:
+                value = {'magRange': row[0], 'value': row[1]}
+                data.append(value)
+    except sqlalchemy.exc.ProgrammingError:
+        data = []
+    return jsonify(data)
+
+
 def fetchAllDataMongo(minMag: float, maxMag: float, fromDate: datetime, toDate: datetime, net: str):
     global data
-    print(fromDate.strftime("%Y-%m-%d %H:%M:%S"), toDate.strftime("%Y-%m-%d %H:%M:%S"), minMag, maxMag, net)
     data = []
     query = [{"mag": {
         "$gte": minMag,
@@ -351,7 +381,6 @@ def deleteAllData(minMag: float, maxMag: float, fromDate: datetime, toDate: date
 
 
 def deleteAllDataMongo(minMag: float, maxMag: float, fromDate: datetime, toDate: datetime, net: str):
-    print(fromDate.strftime("%Y-%m-%d %H:%M:%S"), toDate.strftime("%Y-%m-%d %H:%M:%S"), minMag, maxMag, net)
     query = [{"mag": {
         "$gte": minMag,
         "$lte": maxMag

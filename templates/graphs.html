@@ -22,21 +22,27 @@
 
     <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
     <title>Earthquakes</title>
+    <style>
+        .bar {
+            fill: steelblue;
+        }
+    </style>
 </head>
 <body style="margin: 10px">
 <h1 style="margin-left: 40%">Earthquakes</h1>
 <h4>Name: Vighnesh Sivaraman</h4>
 <h4>UTA ID: 1001878596</h4>
-<ul class="list-group">
-    <li class="list-group-item list-group-item-action"><a href="/graphs">Graphs (Assignment 4)</a></li>
-    <li class="list-group-item list-group-item-action"><a href="/crudMongo">Create Read Update and Delete Earthquake data
-        Mongo (Assignment 3)</a></li>
-    <li class="list-group-item list-group-item-action"><a href="/crud">Create Read Update and Delete Earthquake data SQL
-        (Assignment 3)</a></li>
-    <li class="list-group-item list-group-item-action"><a href="/analyse">Search and Analyse Earthquake Data (Assignment
-        2)</a></li>
-</ul>
-<script src="{{ url_for('static', filename='scripts.js') }}"></script>
+<br>
+<form>
+    <div id="range-sliders">
+    </div>
+    <input id="apply" type="button" class="btn btn-primary" onclick="loadChart()" value="Apply"/>
+    <input id="addNewRange" type="button" class="btn btn-primary" onclick="createNewSlider()" value="Add new range"/>
+    <input id="removeNewRange" type="button" class="btn btn-danger" onclick="deleteSlider()" value="Delete Created range"/>
+</form>
+<svg width="600" height="500"></svg>
+<script src="{{ url_for('static', filename='d3.min.js') }}"></script>
+<script src="{{ url_for('static', filename='graphs.js') }}"></script>
 </body>
 
 </html>
