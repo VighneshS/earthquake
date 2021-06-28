@@ -56,6 +56,8 @@ $(function () {
 });
 
 function loadChart() {
+    spinner.show()
+    figure.hide()
     var payLoad = []
     for (let i = 0; i < sliders; i++) {
         var range_slider = $("#range" + (i + 1) + "-rage")
@@ -66,7 +68,7 @@ function loadChart() {
     }
     $.ajax({
         type: 'POST',
-        url: "/graphs",
+        url: "/graphs/1",
         contentType: "application/json",
         dataType: 'json',
         data: JSON.stringify(payLoad)
@@ -155,6 +157,7 @@ function createChart(data) {
 
     Highcharts.chart('pie-chart', {
         chart: {
+            height: "50%",
             plotBackgroundColor: null,
             plotBorderWidth: null,
             plotShadow: false,

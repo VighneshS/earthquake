@@ -86,24 +86,23 @@
 <h4>UTA ID: 1001878596</h4>
 <br>
 <form>
-    <div id="range-sliders">
-    </div>
+    <label for="numberOfRecent">
+        <select id="numberOfRecent" name="numberOfRecent">
+            <option value="1000">1000</option>
+            <option value="100">100</option>
+            <option value="50">50</option>
+            <option value="10">10</option>
+        </select>
+    </label>
     <input id="apply" type="button" class="btn btn-primary" onclick="loadChart()" value="Apply"/>
-    <input id="addNewRange" type="button" class="btn btn-primary" onclick="createNewSlider()" value="Add new range"/>
-    <input id="removeNewRange" type="button" class="btn btn-danger" onclick="deleteSlider()"
-           value="Delete Created range"/>
 </form>
-<div id="spinner" class="spinner-border" style="width: 3rem; height: 3rem;" role="status">
+<div id="spinner" class="text-center spinner-border" style="width: 3rem; height: 3rem;" role="status">
     <span class="sr-only">Loading...</span>
 </div>
 <figure id="figure" class="highcharts-figure">
     <div id="bar-chart"></div>
     <p class="highcharts-description">
-        A basic column chart compares number of Earthquakes with respect to different ranges of it's magnitude.
-    </p>
-    <div id="pie-chart"></div>
-    <p class="highcharts-description">
-        A basic pie chart compares the % of Earthquakes with respect to different ranges of it's magnitude.
+        A basic scatter plot comparing the Magnitude vs Depth of the most recent Earthquakes
     </p>
 </figure>
 <script src="https://code.highcharts.com/highcharts.js"></script>
@@ -111,7 +110,7 @@
 <script src="https://code.highcharts.com/modules/export-data.js"></script>
 <script src="https://code.highcharts.com/modules/accessibility.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
-<script src="{{ url_for('static', filename='graphs.js') }}"></script>
+<script src="{{ url_for('static', filename='graphs2.js') }}"></script>
 </body>
 
 </html>

@@ -15,7 +15,7 @@ from flask_pymongo import PyMongo
 from flask_sqlalchemy import SQLAlchemy
 from markupsafe import Markup
 from pymongo import MongoClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, desc
 from sqlalchemy import text
 from flask import jsonify
 
@@ -246,12 +246,18 @@ def crud():
                            data=fetchAllData(page, items, minMag, maxMag, fromDate, toDate, lat, lon, dist, night, net))
 
 
-@app.route('/graphs', methods=['GET', 'POST'])
-def graphs():
-    if request.method == 'POST':
-        return fetchAllDataForGraph(request.get_json())
+@app.route('/graphs/<questionNumber>', methods=['GET', 'POST'])
+def graphs(questionNumber: int):
+    if int(questionNumber) == 1:
+        if request.method == 'POST':
+            return fetchAllDataForGraph(request.get_json())
+        else:
+            return render_template('graphs.html')
     else:
-        return render_template('graphs.html')
+        if request.method == 'POST':
+            return fetchAllDataForMagDepthGraph(request.get_json()['numberOfItems'])
+        else:
+            return render_template('graphs2.html')
 
 
 @app.route('/crudMongo', methods=['GET'])
@@ -323,6 +329,19 @@ def fetchAllDataForGraph(range: list):
             for row in rs:
                 value = {'magRange': row[0], 'value': row[1]}
                 data.append(value)
+    except sqlalchemy.exc.ProgrammingError:
+        data = []
+    return jsonify(data)
+
+
+def fetchAllDataForMagDepthGraph(numberOfItems: int):
+    try:
+        global data
+        data = []
+        results = Earthquake.query.with_entities(Earthquake.mag, Earthquake.depth).order_by(
+            desc(Earthquake.time)).limit(numberOfItems).all()
+        for row in results:
+            data.append([row[0], row[1]])
     except sqlalchemy.exc.ProgrammingError:
         data = []
     return jsonify(data)
