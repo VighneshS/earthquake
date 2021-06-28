@@ -245,7 +245,7 @@ def graphs(questionNumber: int):
             return render_template('graphs2.html')
     else:
         if request.method == 'POST':
-            return fetchAllDataForMagDepthGraph(request.get_json()['numberOfItems'])
+            return fetchAllDataForMagDepthGraph(request.get_json())
         else:
             return render_template('graphs3.html')
 
@@ -330,7 +330,7 @@ def fetchAllDataForGraphByCountry(countryName: str):
             group by magRange'''.replace('{countryName}', countryName)
         for r in range(longitudeMin, longitudeMax, step):
             q += " when Longitude between {f} and {t} then '{f}-{t}' ".replace('{f}', str(r)).replace('{t}',
-                                                                                                     str(r + step))
+                                                                                                      str(r + step))
         q += qTail
         with engine.connect() as con:
             rs = con.execute(q)
@@ -342,14 +342,16 @@ def fetchAllDataForGraphByCountry(countryName: str):
     return jsonify(data)
 
 
-def fetchAllDataForMagDepthGraph(numberOfItems: int):
+def fetchAllDataForMagDepthGraph(volcanoNumbers):
     try:
         global data
         data = []
-        results = Earthquake.query.with_entities(Earthquake.Elev, Earthquake.Number).order_by(
-            desc(Earthquake.Number)).limit(numberOfItems).all()
+        results = Earthquake.query.with_entities(Earthquake.Number, Earthquake.Longitude).filter(
+            Earthquake.Number >= volcanoNumbers['from']).filter(
+            Earthquake.Number <= volcanoNumbers['to']).order_by(
+            desc(Earthquake.Number)).all()
         for row in results:
-            data.append([row[0], row[1]])
+            data.append([row[0] / 1000, row[1]])
     except sqlalchemy.exc.ProgrammingError:
         data = []
     return jsonify(data)

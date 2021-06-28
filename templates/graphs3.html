@@ -21,7 +21,7 @@
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 
     <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-    <title>Earthquakes</title>
+    <title>Volcanoes</title>
     <style>
         #spinner {
             margin: auto;
@@ -86,14 +86,8 @@
 <h4>UTA ID: 1001878596</h4>
 <br>
 <form>
-    <label for="numberOfRecent">
-        <select id="numberOfRecent" name="numberOfRecent">
-            <option value="1000">1000</option>
-            <option value="100">100</option>
-            <option value="50">50</option>
-            <option value="10">10</option>
-        </select>
-    </label>
+    <div id="range-sliders">
+    </div>
     <input id="apply" type="button" class="btn btn-primary" onclick="loadChart()" value="Apply"/>
 </form>
 <div id="spinner" class="text-center spinner-border" style="width: 3rem; height: 3rem;" role="status">
@@ -102,7 +96,7 @@
 <figure id="figure" class="highcharts-figure">
     <div id="bar-chart"></div>
     <p class="highcharts-description">
-        A basic scatter plot comparing the Magnitude vs Depth of the most recent Volcanoes
+        A basic scatter plot comparing the VN = (Volcano Number / 1000 ) vs Longitude for Volcanoes
     </p>
 </figure>
 <script src="https://code.highcharts.com/highcharts.js"></script>
@@ -110,7 +104,7 @@
 <script src="https://code.highcharts.com/modules/export-data.js"></script>
 <script src="https://code.highcharts.com/modules/accessibility.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
-<script src="{{ url_for('static', filename='graphs2.js') }}"></script>
+<script src="{{ url_for('static', filename='graphs3.js') }}"></script>
 </body>
 
 </html>
