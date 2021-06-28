@@ -91,52 +91,32 @@ dataType = {
 
 @dataclass
 class Earthquake(db.Model):
-    __tablename__ = tableName
-    id: str
-    time: datetime
-    latitude: float
-    longitude: float
-    depth: float
-    mag: float
-    magType: str
-    nst: int
-    gap: float
-    dmin: float
-    rms: float
-    net: str
-    updated: datetime
-    place: str
-    type: str
-    horizontalError: float
-    depthError: float
-    magError: float
-    magNst: int
-    status: str
-    locationSource: str
-    magSource: str
+    __tablename__ = 'volcanoes'
+    Number: int
+    Name: str
+    Country: str
+    Region: str
+    Latitude: float
+    Longitude: float
+    Elev: int
 
-    id = db.Column(db.String(200), primary_key=True, nullable=False)
-    time = db.Column(sqlalchemy.TIMESTAMP)
-    latitude = db.Column(sqlalchemy.Float())
-    longitude = db.Column(sqlalchemy.Float())
-    depth = db.Column(sqlalchemy.Float())
-    mag = db.Column(sqlalchemy.Float())
-    magType = db.Column(sqlalchemy.VARCHAR(200))
-    nst = db.Column(sqlalchemy.Integer())
-    gap = db.Column(sqlalchemy.Float())
-    dmin = db.Column(sqlalchemy.Float())
-    rms = db.Column(sqlalchemy.Float())
-    net = db.Column(sqlalchemy.VARCHAR(200))
-    updated = db.Column(sqlalchemy.TIMESTAMP)
-    place = db.Column(sqlalchemy.VARCHAR(200))
-    type = db.Column(sqlalchemy.VARCHAR(200))
-    horizontalError = db.Column(sqlalchemy.Float())
-    depthError = db.Column(sqlalchemy.Float())
-    magError = db.Column(sqlalchemy.Float())
-    magNst = db.Column(sqlalchemy.Integer())
-    status = db.Column(sqlalchemy.VARCHAR(200))
-    locationSource = db.Column(sqlalchemy.VARCHAR(200))
-    magSource = db.Column(sqlalchemy.VARCHAR(200))
+    Number = db.Column(db.Integer(), primary_key=True, nullable=False)
+    Name = db.Column(sqlalchemy.VARCHAR(200))
+    Country = db.Column(sqlalchemy.VARCHAR(200))
+    Region = db.Column(sqlalchemy.VARCHAR(200))
+    Latitude = db.Column(sqlalchemy.Float())
+    Longitude = db.Column(sqlalchemy.Float())
+    Elev = db.Column(db.Integer())
+
+
+@dataclass
+class VolcanoIndex(db.Model):
+    __tablename__ = 'volcano_index'
+    Number: int
+    Sequence: int
+
+    Number = db.Column(db.Integer(), primary_key=True, nullable=False)
+    Sequence = db.Column(db.Integer())
 
 
 @app.template_filter('urlencode')
@@ -294,17 +274,9 @@ def fetchAllData(page: int, items: int, minMag: float, maxMag: float, fromDate: 
     nightFilterQueryString = text(
         nightFilterQuery.replace(':nightStart', nightStart).replace(':nightEnd', nightEnd))
     try:
-        q = Earthquake.query.filter(Earthquake.mag >= minMag).filter(Earthquake.mag <= maxMag).filter(
-            Earthquake.time >= fromDate).filter(Earthquake.time <= toDate)
-        if net:
-            q = q.filter(Earthquake.net == net)
-        if night:
-            q = q.filter(nightFilterQueryString)
-        if lat and lon and dist:
-            q = q.filter(distanceFilterQueryString)
-        data = q.paginate(per_page=items,
-                          page=page,
-                          error_out=True)
+        data = Earthquake.query.paginate(per_page=items,
+                                         page=page,
+                                         error_out=True)
     except sqlalchemy.exc.ProgrammingError:
         data = []
     return data
@@ -318,11 +290,11 @@ def fetchAllDataForGraph(range: list):
         qTail = ''' else 'OTHERS'
             end  as `magRange`,
             count(1) as `Count`
-            from earthquakes
+            from volcanoes
             group by magRange'''
         for r in range:
-            q += " when mag between {f} and {t} then '{f}-{t}' ".replace('{f}', str(r['from'])).replace('{t}',
-                                                                                                        str(r['to']))
+            q += " when Latitude between {f} and {t} then '{f}-{t}' ".replace('{f}', str(r['from'])).replace('{t}',
+                                                                                                         str(r['to']))
         q += qTail
         with engine.connect() as con:
             rs = con.execute(q)
@@ -338,8 +310,8 @@ def fetchAllDataForMagDepthGraph(numberOfItems: int):
     try:
         global data
         data = []
-        results = Earthquake.query.with_entities(Earthquake.mag, Earthquake.depth).order_by(
-            desc(Earthquake.time)).limit(numberOfItems).all()
+        results = Earthquake.query.with_entities(Earthquake.Elev, Earthquake.Number).order_by(
+            desc(Earthquake.Number)).limit(numberOfItems).all()
         for row in results:
             data.append([row[0], row[1]])
     except sqlalchemy.exc.ProgrammingError:
