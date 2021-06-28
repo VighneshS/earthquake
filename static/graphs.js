@@ -1,6 +1,8 @@
 var minRange1 = -1
 var maxRange1 = 6
 var sliders = 0
+var spinner
+var figure
 
 function createNewSlider() {
     const rangeSliders = $('#range-sliders')
@@ -43,6 +45,10 @@ function deleteSlider() {
 }
 
 $(function () {
+    spinner = $('#spinner')
+    figure = $('#figure')
+    spinner.show()
+    figure.hide()
     createNewSlider();
     createNewSlider();
     createNewSlider();
@@ -67,13 +73,15 @@ function loadChart() {
     }).done(function (data) {
         // $(this).addClass("done");
         createChart(data)
+        spinner.hide()
+        figure.show()
     });
 }
 
 function createChart(data) {
     var categories = _.map(data, 'magRange');
     var values = _.map(data, 'value');
-    Highcharts.chart('container', {
+    Highcharts.chart('bar-chart', {
         chart: {
             height: "50%",
             type: 'column'
@@ -82,7 +90,7 @@ function createChart(data) {
             text: 'Number of earthquakes based on magnitude range'
         },
         subtitle: {
-            text: 'Bar Graph'
+            text: 'Bar Chart'
         },
         xAxis: {
             categories: categories,
@@ -111,10 +119,10 @@ function createChart(data) {
             },
             column: {
                 zones: [{
-                	value: _.max(_.map(data, 'value')), // Values up to max value (not including) ...
+                    value: _.max(_.map(data, 'value')), // Values up to max value (not including) ...
                     color: '#79973F' // ... have the color pea.
-                },{
-                	color: '#EE6363' // Values from max value (including) and up have the color fire brick red
+                }, {
+                    color: '#EE6363' // Values from max value (including) and up have the color fire brick red
                 }],
                 pointPadding: 0.2,
                 borderWidth: 0
@@ -124,6 +132,62 @@ function createChart(data) {
             name: 'Number of Earthquakes',
             data: values
 
+        }]
+    });
+
+    var pieChartData = []
+    data.map(item => {
+        pieChartData.push(
+            _.mapKeys(item, (value, key) => {
+                let newKey = key;
+                if (key === 'magRange') {
+                    newKey = 'name';
+                }
+
+                if (key === 'value') {
+                    newKey = 'y';
+                }
+
+                return newKey;
+            })
+        )
+    });
+
+    Highcharts.chart('pie-chart', {
+        chart: {
+            plotBackgroundColor: null,
+            plotBorderWidth: null,
+            plotShadow: false,
+            type: 'pie'
+        },
+        title: {
+            text: 'Number of earthquakes based on magnitude range'
+        },
+        subtitle: {
+            text: 'Pie Chart'
+        },
+        tooltip: {
+            pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+        },
+        accessibility: {
+            point: {
+                valueSuffix: '%'
+            }
+        },
+        plotOptions: {
+            pie: {
+                allowPointSelect: true,
+                cursor: 'pointer',
+                dataLabels: {
+                    enabled: true,
+                    format: '<b>{point.name}</b>: {point.percentage:.1f} %',
+                    connectorColor: 'silver'
+                }
+            }
+        },
+        series: [{
+            name: 'Percentage of Earthquakes',
+            data: pieChartData
         }]
     });
 }
