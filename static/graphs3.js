@@ -1,76 +1,26 @@
-var minRange1 = 10104
-var maxRange1 = 1900081
-var step = 100
-var sliders = 0
 var spinner
 var figure
-
-function createNewSlider() {
-    const rangeSliders = $('#range-sliders')
-    const $label = $("<label for=\"range" + (sliders + 1) + "\"></label>").text('Range ' + (sliders + 1) + ':');
-    const $br = $('<br>');
-    const $input = $('<input type="text" readonly style="border:0; color:#f6931f; font-weight:bold;"/>').attr({
-        id: "range" + (sliders + 1)
-    });
-    var $div = $('<div></div>').attr({id: 'range' + (sliders + 1) + '-rage'});
-    var $container = $('<div></div>').attr({id: 'range' + (sliders + 1) + '-container'});
-
-    $label.appendTo($container)
-    $br.appendTo($container)
-    $input.appendTo($container)
-    $div.appendTo($container)
-    $br.appendTo($container)
-    rangeSliders.append($container)
-
-    var sliderNumber = (sliders + 1)
-
-    $("#range" + (sliders + 1) + "-rage").slider({
-        range: true,
-        min: minRange1,
-        max: maxRange1,
-        values: [minRange1, maxRange1],
-        step: step,
-        slide: function (event, ui) {
-            $("#range" + sliderNumber).val(ui.values[0] + " - " + ui.values[1]);
-        }
-    });
-    $("#range" + sliderNumber).val($("#range" + sliderNumber + "-rage").slider("values", 0) +
-        " to " + $("#range" + sliderNumber + "-rage").slider("values", 1));
-    ++sliders
-}
-
-function deleteSlider() {
-
-    $("#range" + (sliders) + "-container").remove()
-    --sliders
-}
 
 $(function () {
     spinner = $('#spinner')
     figure = $('#figure')
     spinner.show()
     figure.hide()
-    createNewSlider();
     loadChart()
 });
 
 function loadChart() {
     spinner.show()
     figure.hide()
-    var payLoad = []
-    for (let i = 0; i < sliders; i++) {
-        var range_slider = $("#range" + (i + 1) + "-rage")
-        payLoad.push({
-            'from': range_slider.slider("values", 0),
-            'to': range_slider.slider("values", 1)
-        })
+    var payLoad = {
+        'numberOfItems': $('#numberOfRecent').val()
     }
     $.ajax({
         type: 'POST',
-        url: "/graphs/3",
+        url: "/graphs/2",
         contentType: "application/json",
         dataType: 'json',
-        data: JSON.stringify(payLoad[0])
+        data: JSON.stringify(payLoad)
     }).done(function (data) {
         createChart(data)
         spinner.hide()
@@ -86,7 +36,7 @@ function createChart(data) {
             zoomType: 'xy'
         },
         title: {
-            text: 'VN = (Volcano Number / 1000 ) vs Longitude for Volcanoes'
+            text: 'Magnitude vs Depth of Recent Earthquake data'
         },
         subtitle: {
             text: 'Scatter plot'
@@ -94,7 +44,7 @@ function createChart(data) {
         xAxis: {
             title: {
                 enabled: true,
-                text: 'VN = (Volcano Number / 1000 )'
+                text: 'Magnitude'
             },
             startOnTick: true,
             endOnTick: true,
@@ -102,7 +52,7 @@ function createChart(data) {
         },
         yAxis: {
             title: {
-                text: 'Longitude'
+                text: 'Depth'
             }
         },
         legend: {
@@ -135,12 +85,12 @@ function createChart(data) {
                 },
                 tooltip: {
                     headerFormat: '<b>{series.name}</b><br>',
-                    pointFormat: '{point.x}, {point.y}'
+                    pointFormat: '{point.x}, {point.y} kg'
                 }
             }
         },
         series: [{
-            name: 'VN = (Volcano Number / 1000 ) vs Longitude for Volcanoes',
+            name: 'Magnitude vs Depth',
             color: 'rgba(223, 83, 83, .5)',
             data: data
 
