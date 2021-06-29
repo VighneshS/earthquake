@@ -1,6 +1,5 @@
-var minRange1 = -80
-var maxRange1 = 80
-var step = 10
+var minRange1 = -1
+var maxRange1 = 6
 var sliders = 0
 var spinner
 var figure
@@ -26,10 +25,10 @@ function createNewSlider() {
 
     $("#range" + (sliders + 1) + "-rage").slider({
         range: true,
-        min: minRange1,
-        max: maxRange1,
+        min: -1,
+        max: 6,
         values: [minRange1, maxRange1],
-        step: step,
+        step: 0.1,
         slide: function (event, ui) {
             $("#range" + sliderNumber).val(ui.values[0] + " - " + ui.values[1]);
         }
@@ -90,7 +89,7 @@ function createChart(data) {
             type: 'column'
         },
         title: {
-            text: 'Number of Volcanoes based on Latitude range'
+            text: 'Number of earthquakes based on magnitude range'
         },
         subtitle: {
             text: 'Bar Chart'
@@ -99,13 +98,13 @@ function createChart(data) {
             categories: categories,
             crosshair: true,
             title: {
-                text: 'Volcano Latitude Range'
+                text: 'Earthquake Magnitude Range'
             }
         },
         yAxis: {
             min: 0,
             title: {
-                text: 'Number of Volcanoes'
+                text: 'Number of Earthquakes'
             }
         },
         tooltip: {
@@ -121,9 +120,6 @@ function createChart(data) {
                 color: '#EE6363'
             },
             column: {
-                dataLabels: {
-                    enabled: true
-                },
                 zones: [{
                     value: _.max(_.map(data, 'value')), // Values up to max value (not including) ...
                     color: '#79973F' // ... have the color pea.
@@ -135,7 +131,7 @@ function createChart(data) {
             }
         },
         series: [{
-            name: 'Number of Volcanoes',
+            name: 'Number of Earthquakes',
             data: values
 
         }]
@@ -168,7 +164,7 @@ function createChart(data) {
             type: 'pie'
         },
         title: {
-            text: 'Number of Volcanoes based on Latitude range'
+            text: 'Number of earthquakes based on magnitude range'
         },
         subtitle: {
             text: 'Pie Chart'
@@ -193,7 +189,7 @@ function createChart(data) {
             }
         },
         series: [{
-            name: 'Percentage of Volcanoes',
+            name: 'Percentage of Earthquakes',
             data: pieChartData
         }]
     });
