@@ -21,7 +21,7 @@
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 
     <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-    <title>Volcanoes</title>
+    <title>Earthquakes</title>
     <style>
         #spinner {
             margin: auto;
@@ -86,20 +86,23 @@
 <h4>UTA ID: 1001878596</h4>
 <br>
 <form>
-    <label for="countryName">Country Name: </label><input id="countryName" value="United States" type="text" required><br>
+    <label for="numberOfRecent">
+        <select id="numberOfRecent" name="numberOfRecent">
+            <option value="1000">1000</option>
+            <option value="100">100</option>
+            <option value="50">50</option>
+            <option value="10">10</option>
+        </select>
+    </label>
     <input id="apply" type="button" class="btn btn-primary" onclick="loadChart()" value="Apply"/>
 </form>
-<div id="spinner" class="spinner-border" style="width: 3rem; height: 3rem;" role="status">
+<div id="spinner" class="text-center spinner-border" style="width: 3rem; height: 3rem;" role="status">
     <span class="sr-only">Loading...</span>
 </div>
 <figure id="figure" class="highcharts-figure">
     <div id="bar-chart"></div>
     <p class="highcharts-description">
-        A basic column chart compares number of Volcanoes with respect to different ranges of it's Longitude of the input country.
-    </p>
-    <div id="pie-chart"></div>
-    <p class="highcharts-description">
-        A basic pie chart compares the % of Volcanoes with respect to different ranges of it's Longitude of the input country.
+        A basic scatter plot comparing the Magnitude vs Depth of the most recent Volcanoes
     </p>
 </figure>
 <script src="https://code.highcharts.com/highcharts.js"></script>

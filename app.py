@@ -33,10 +33,6 @@ redisHost = os.environ['REDIS_HOST']
 redisPassword = os.environ['REDIS_PASSWORD']
 mongoHost = os.environ['MONGO_HOST']
 
-longitudeMin = -180
-longitudeMax = 180
-step = 10
-
 # Upload folder
 UPLOAD_FOLDER = 'static'
 FILE_NAME = 'all_month.csv'
@@ -237,17 +233,11 @@ def graphs(questionNumber: int):
             return fetchAllDataForGraph(request.get_json())
         else:
             return render_template('graphs.html')
-    elif int(questionNumber) == 2:
-        if request.method == 'POST':
-            print(request.get_json())
-            return fetchAllDataForGraphByCountry(request.get_json()['countryName'])
-        else:
-            return render_template('graphs2.html')
     else:
         if request.method == 'POST':
             return fetchAllDataForMagDepthGraph(request.get_json()['numberOfItems'])
         else:
-            return render_template('graphs3.html')
+            return render_template('graphs2.html')
 
 
 @app.route('/crudMongo', methods=['GET'])
@@ -304,33 +294,7 @@ def fetchAllDataForGraph(range: list):
             group by magRange'''
         for r in range:
             q += " when Latitude between {f} and {t} then '{f}-{t}' ".replace('{f}', str(r['from'])).replace('{t}',
-                                                                                                             str(r[
-                                                                                                                     'to']))
-        q += qTail
-        with engine.connect() as con:
-            rs = con.execute(q)
-            for row in rs:
-                value = {'magRange': row[0], 'value': row[1]}
-                data.append(value)
-    except sqlalchemy.exc.ProgrammingError:
-        data = []
-    return jsonify(data)
-
-
-def fetchAllDataForGraphByCountry(countryName: str):
-    try:
-        global data
-        data = []
-        q = '''select case '''
-        qTail = ''' else 'OTHERS'
-            end  as `magRange`,
-            count(1) as `Count`
-            from volcanoes
-            where Country = '{countryName}'
-            group by magRange'''.replace('{countryName}', countryName)
-        for r in range(longitudeMin, longitudeMax, step):
-            q += " when Longitude between {f} and {t} then '{f}-{t}' ".replace('{f}', str(r)).replace('{t}',
-                                                                                                     str(r + step))
+                                                                                                         str(r['to']))
         q += qTail
         with engine.connect() as con:
             rs = con.execute(q)
